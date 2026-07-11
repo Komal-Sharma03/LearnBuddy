@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}LearnBuddy{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Light theme (default) ── */
+    :root,
+    [data-theme="light"] {
+      --bg:        #f7f8fa;
+      --surface:   #ffffff;
+      --surface2:  #f0f2f5;
+      --border:    #e5e7eb;
+      --text:      #1f2328;
+      --muted:     #57606a;
+      --accent:    #3b82d4;
+      --purple:    #7c5cd8;
+      --orange:    #e05c3a;
+      --radius:    10px;
+      --shadow:    0 1px 4px rgba(0,0,0,.08);
+
+      /* semantic tints (used for badges, milestones, hints) */
+      --tint-accent:  #e8f0fb;
+      --tint-purple:  #f0edfb;
+      --tint-orange:  #fdf0ed;
+      --tint-green:   #e7f5ee;
+      --text-green:   #1a7f4b;
+      --hint-bg:      #f9f9fb;
+      --val-red:      #c0392b;
+
+      /* toggle button */
+      --toggle-bg:    #e5e7eb;
+      --toggle-icon:  "☀️";
+    }
+
+    /* ── Dark theme ── */
+    [data-theme="dark"] {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2230;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --accent:    #58a6ff;
+      --purple:    #a371f7;
+      --orange:    #f0874a;
+      --shadow:    0 1px 4px rgba(0,0,0,.4);
+
+      --tint-accent:  #1a2a40;
+      --tint-purple:  #1e1830;
+      --tint-orange:  #2a1a12;
+      --tint-green:   #0d2318;
+      --text-green:   #3fb950;
+      --hint-bg:      #1c2230;
+      --val-red:      #f85149;
+
+      --toggle-bg:    #30363d;
+      --toggle-icon:  "🌙";
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background .2s, color .2s;
+    }
+
+    /* ── nav ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .nav-left  { display: flex; align-items: center; gap: 1.25rem; }
+    .nav-right { display: flex; align-items: center; gap: .5rem; }
+
+    .nav-brand { font-size: 1.15rem; font-weight: 700; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: .45rem; }
+    .nav-brand span { font-size: 1.25rem; }
+    .nav-link  { font-size: .875rem; color: var(--muted); text-decoration: none; padding: .35rem .75rem; border-radius: 6px; transition: background .15s; }
+    .nav-link:hover { background: var(--surface2); color: var(--text); }
+
+    /* ── theme toggle ── */
+    #theme-toggle {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, border-color .15s;
+      flex-shrink: 0;
+    }
+    #theme-toggle:hover { background: var(--border); }
+
+    /* ── layout ── */
+    main { flex: 1; padding: 2.5rem 1rem; }
+    .container      { max-width: 760px; margin: 0 auto; }
+    .container-wide { max-width: 940px; margin: 0 auto; }
+
+    /* ── cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* ── buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .6rem 1.35rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: filter .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary   { background: var(--accent);  color: #fff; }
+    .btn-primary:hover  { filter: brightness(1.12); }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-purple { background: var(--purple); color: #fff; }
+    .btn-purple:hover { filter: brightness(1.12); }
+    .btn-orange { background: var(--orange); color: #fff; }
+    .btn-orange:hover { filter: brightness(1.12); }
+
+    /* ── badges ── */
+    .badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2rem .65rem; border-radius: 20px; }
+    .badge-blue   { background: var(--tint-accent);  color: var(--accent); }
+    .badge-purple { background: var(--tint-purple);  color: var(--purple); }
+    .badge-orange { background: var(--tint-orange);  color: var(--orange); }
+    .badge-green  { background: var(--tint-green);   color: var(--text-green); }
+
+    /* ── footer ── */
+    footer {
+      text-align: center;
+      font-size: .78rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding: 1.1rem 1rem;
+      background: var(--surface);
+    }
+
+    /* ── utility ── */
+    .text-muted { color: var(--muted); }
+    .mt-1 { margin-top: .5rem; }   .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 1.5rem; }  .mt-4 { margin-top: 2rem; }
+    .mb-1 { margin-bottom: .5rem; }.mb-2 { margin-bottom: 1rem; }
+  </style>
+  {% block extra_styles %}{% endblock %}
+</head>
+<body>
+  <nav>
+    <div class="nav-left">
+      <a class="nav-brand" href="{{ url_for('index') }}"><span>📚</span> LearnBuddy</a>
+      <a class="nav-link"  href="{{ url_for('restart') }}">← Start Over</a>
+    </div>
+    <div class="nav-right">
+      <button id="theme-toggle" title="Toggle dark / light mode" aria-label="Toggle theme">🌙</button>
+    </div>
+  </nav>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    Powered by IBM Watsonx.ai · Granite Models &nbsp;|&nbsp; Made with IBM Bob
+  </footer>
+
+  <!-- ── dark/light toggle script (runs on every page) ── -->
+  <script>
+    (function () {
+      const STORAGE_KEY = "lb-theme";
+      const html = document.documentElement;
+      const btn  = document.getElementById("theme-toggle");
+
+      // Apply saved or system preference immediately (before paint)
+      const saved  = localStorage.getItem(STORAGE_KEY);
+      const prefer = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      const initial = saved || prefer;
+      html.setAttribute("data-theme", initial);
+
+      function syncIcon() {
+        btn.textContent = html.getAttribute("data-theme") === "dark" ? "☀️" : "🌙";
+        btn.title = html.getAttribute("data-theme") === "dark"
+          ? "Switch to Light Mode" : "Switch to Dark Mode";
+      }
+      syncIcon();
+
+      btn.addEventListener("click", function () {
+        const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        html.setAttribute("data-theme", next);
+        localStorage.setItem(STORAGE_KEY, next);
+        syncIcon();
+      });
+    })();
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

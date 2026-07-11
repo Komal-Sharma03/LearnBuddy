@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}LearnBuddy — {{ track_data.label }} Assessment{% endblock %}
+
+{% block extra_styles %}
+<style>
+  :root {
+    --track-color: {{ track_data.color }};
+  }
+
+  .q-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .q-header .icon  { font-size: 2.4rem; display: block; margin-bottom: .5rem; }
+  .q-header h1     { font-size: 1.6rem; font-weight: 800; }
+  .q-header p      { color: var(--muted); margin-top: .35rem; font-size: .95rem; }
+
+  /* progress bar */
+  .progress-wrap {
+    background: var(--border);
+    border-radius: 99px;
+    height: 6px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--track-color);
+    transition: width .35s ease;
+  }
+  .progress-label {
+    font-size: .8rem;
+    color: var(--muted);
+    text-align: right;
+    margin-top: .35rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* question card */
+  .q-card {
+    display: none;
+    animation: fadeSlide .3s ease;
+  }
+  .q-card.active { display: block; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .q-num {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--track-color);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .5rem;
+  }
+  .q-text { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem; }
+
+  /* option tiles */
+  .options { display: grid; gap: .6rem; }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .85rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+  }
+  .option input[type="radio"] { display: none; }
+  .option:hover { border-color: var(--track-color); background: var(--surface2); }
+  .option.selected {
+    border-color: var(--track-color);
+    background: color-mix(in srgb, var(--track-color) 10%, var(--bg));
+  }
+  .option .radio-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    transition: border-color .15s, background .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .option.selected .radio-dot {
+    border-color: var(--track-color);
+    background: var(--track-color);
+  }
+  .option.selected .radio-dot::after {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    display: block;
+  }
+  .option-text { font-size: .925rem; }
+
+  /* nav buttons */
+  .q-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.75rem;
+  }
+
+  .btn-track {
+    background: var(--track-color);
+    color: #fff;
+    border: none;
+    padding: .65rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .btn-track:hover   { filter: brightness(1.1); }
+  .btn-track:active  { transform: scale(.97); }
+  .btn-track:disabled { opacity: .45; cursor: default; filter: none; }
+
+  /* submit */
+  #submit-btn { display: none; }
+  #submit-btn.visible { display: inline-flex; }
+
+  /* validation hint */
+  .val-hint {
+    font-size: .8rem;
+    color: var(--val-red);
+    margin-top: .75rem;
+    display: none;
+  }
+  .val-hint.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="q-header">
+    <span class="icon">{{ track_data.icon }}</span>
+    <h1>{{ track_data.label }} Assessment</h1>
+    <p>Answer {{ total }} quick questions so we can calibrate your personalised roadmap.</p>
+  </div>
+
+  <!-- progress -->
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress-bar" style="width: {{ (1/total*100)|round(1) }}%"></div>
+  </div>
+  <div class="progress-label">
+    Question <span id="q-counter">1</span> of {{ total }}
+  </div>
+
+  <form method="POST" action="{{ url_for('submit') }}" id="quiz-form">
+
+    {% for q in questions %}
+    <div class="card q-card {% if loop.first %}active{% endif %}" id="card-{{ loop.index }}" data-index="{{ loop.index }}">
+      <div class="q-num">Question {{ loop.index }}</div>
+      <div class="q-text">{{ q.text }}</div>
+      <div class="options" id="options-{{ loop.index }}">
+        {% for opt in q.options %}
+        <label class="option" onclick="selectOption(this)">
+          <input type="radio" name="{{ q.id }}" value="{{ opt }}" required />
+          <span class="radio-dot"></span>
+          <span class="option-text">{{ opt }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="val-hint" id="hint-{{ loop.index }}">Please select an answer before continuing.</div>
+    </div>
+    {% endfor %}
+
+    <!-- nav -->
+    <div class="q-nav">
+      <button type="button" class="btn btn-secondary" id="prev-btn" onclick="changeQ(-1)" style="visibility:hidden">← Back</button>
+
+      <button type="button" class="btn-track" id="next-btn" onclick="changeQ(1)">
+        Next →
+      </button>
+
+      <button type="submit" class="btn-track" id="submit-btn">
+        Generate My Roadmap 🚀
+      </button>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const TOTAL = {{ total }};
+  let current = 1;
+
+  function updateProgress() {
+    const pct = (current / TOTAL) * 100;
+    document.getElementById("progress-bar").style.width = pct + "%";
+    document.getElementById("q-counter").textContent = current;
+  }
+
+  function selectOption(label) {
+    const container = label.closest(".options");
+    container.querySelectorAll(".option").forEach(l => l.classList.remove("selected"));
+    label.classList.add("selected");
+    label.querySelector("input").checked = true;
+    // hide validation hint
+    const hint = document.getElementById("hint-" + current);
+    if (hint) hint.classList.remove("show");
+  }
+
+  function isAnswered(index) {
+    const card = document.getElementById("card-" + index);
+    return card.querySelector("input[type=radio]:checked") !== null;
+  }
+
+  function changeQ(dir) {
+    if (dir === 1 && !isAnswered(current)) {
+      const hint = document.getElementById("hint-" + current);
+      if (hint) hint.classList.add("show");
+      return;
+    }
+
+    document.getElementById("card-" + current).classList.remove("active");
+    current += dir;
+    document.getElementById("card-" + current).classList.add("active");
+
+    // prev button
+    document.getElementById("prev-btn").style.visibility = current > 1 ? "visible" : "hidden";
+
+    // swap next / submit
+    const nextBtn   = document.getElementById("next-btn");
+    const submitBtn = document.getElementById("submit-btn");
+
+    if (current === TOTAL) {
+      nextBtn.style.display   = "none";
+      submitBtn.classList.add("visible");
+    } else {
+      nextBtn.style.display   = "inline-flex";
+      submitBtn.classList.remove("visible");
+    }
+
+    updateProgress();
+  }
+
+  // final validation before submit
+  document.getElementById("quiz-form").addEventListener("submit", function(e) {
+    if (!isAnswered(current)) {
+      e.preventDefault();
+      const hint = document.getElementById("hint-" + current);
+      if (hint) hint.classList.add("show");
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}LearnBuddy — Choose Your Track{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .hero { text-align: center; padding: 2.5rem 1rem 2rem; }
+  .hero h1 { font-size: 2.1rem; font-weight: 800; margin-bottom: .5rem; }
+  .hero p  { font-size: 1.05rem; color: var(--muted); max-width: 520px; margin: 0 auto 2rem; }
+
+  .tracks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-top: .5rem;
+  }
+
+  .track-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color .18s, box-shadow .18s, transform .1s;
+    display: block;
+  }
+  .track-card:hover {
+    border-color: var(--card-color, var(--accent));
+    box-shadow: 0 4px 16px rgba(0,0,0,.18);
+    transform: translateY(-2px);
+  }
+  .track-card .icon { font-size: 2.6rem; display: block; margin-bottom: .75rem; }
+  .track-card h3  { font-size: 1.15rem; font-weight: 700; margin-bottom: .4rem; }
+  .track-card p   { font-size: .875rem; color: var(--muted); line-height: 1.5; }
+  .track-card .cta {
+    display: inline-block;
+    margin-top: 1.1rem;
+    font-size: .825rem;
+    font-weight: 700;
+    padding: .45rem 1rem;
+    border-radius: 6px;
+    color: #fff;
+    background: var(--card-color, var(--accent));
+  }
+
+  .how-it-works {
+    margin-top: 3rem;
+    text-align: center;
+  }
+  .how-it-works h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; }
+  .steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.4rem;
+    max-width: 200px;
+    text-align: center;
+    font-size: .875rem;
+    color: var(--muted);
+  }
+  .step .num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--tint-accent);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: .95rem;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto .6rem;
+  }
+  .step strong { display: block; color: var(--text); font-size: .9rem; margin-bottom: .25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="hero">
+    <h1>📚 LearnBuddy</h1>
+    <p>Your AI-powered learning coach. Take a quick diagnostic quiz and get a personalised course roadmap — powered by IBM Watsonx.ai Granite Models.</p>
+  </div>
+
+  <div class="tracks-grid">
+    {% for key, track in tracks.items() %}
+    <a
+      href="{{ url_for('questionnaire', track=key) }}"
+      class="track-card"
+      style="--card-color: {{ track.color }};"
+    >
+      <span class="icon">{{ track.icon }}</span>
+      <h3>{{ track.label }}</h3>
+      <p>
+        {% if key == 'frontend' %}Build stunning web interfaces with HTML, CSS, JavaScript and React.
+        {% elif key == 'cybersecurity' %}Protect systems and data — ethical hacking, networking &amp; defence.
+        {% else %}Design beautiful, user-centred digital products in Figma.
+        {% endif %}
+      </p>
+      <span class="cta">Start Assessment →</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <strong>Choose a Track</strong>
+        Select the skill area you want to learn.
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <strong>Take the Quiz</strong>
+        Answer 5 quick diagnostic questions.
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <strong>Get Your Roadmap</strong>
+        IBM Granite AI generates your personalised learning path.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

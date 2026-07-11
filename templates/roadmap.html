@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% block title %}LearnBuddy — Your {{ track_data.label }} Roadmap{% endblock %}
+
+{% block extra_styles %}
+<style>
+  :root {
+    --track-color: {{ track_data.color }};
+  }
+
+  /* ── header ── */
+  .roadmap-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .roadmap-header .icon-box {
+    font-size: 2.8rem;
+    flex-shrink: 0;
+    line-height: 1;
+    padding-top: .1rem;
+  }
+  .roadmap-header h1 { font-size: 1.65rem; font-weight: 800; line-height: 1.2; }
+  .roadmap-header .meta { margin-top: .45rem; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+  .roadmap-header p.summary { color: var(--muted); font-size: .95rem; margin-top: .75rem; line-height: 1.6; }
+
+  .level-badge {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 700;
+    padding: .2rem .75rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--track-color) 15%, var(--bg));
+    color: var(--track-color);
+  }
+
+  /* ── stat strip ── */
+  .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    text-align: center;
+  }
+  .stat-box .val { font-size: 1.5rem; font-weight: 800; color: var(--track-color); }
+  .stat-box .lbl { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
+
+  /* ── timeline ── */
+  .timeline { position: relative; padding-left: 2.5rem; }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .module {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  .module-dot {
+    position: absolute;
+    left: -2.5rem;
+    top: 1.1rem;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--track-color);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1;
+  }
+
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: box-shadow .18s;
+  }
+  .module-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+
+  .module-head {
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .module-head-left { display: flex; align-items: center; gap: .75rem; }
+  .module-title { font-weight: 700; font-size: 1rem; }
+  .module-dur {
+    font-size: .78rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .expand-icon {
+    font-size: 1rem;
+    color: var(--muted);
+    transition: transform .25s;
+    flex-shrink: 0;
+  }
+  .module-card.open .expand-icon { transform: rotate(180deg); }
+
+  .module-body {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .module-card.open .module-body { display: block; }
+
+  .section-label {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    margin: 1rem 0 .5rem;
+  }
+
+  .tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .tag {
+    font-size: .8rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: .2rem .7rem;
+    color: var(--text);
+  }
+
+  .milestone-box {
+    background: color-mix(in srgb, var(--track-color) 10%, var(--bg));
+    border-left: 3px solid var(--track-color);
+    border-radius: 0 6px 6px 0;
+    padding: .65rem 1rem;
+    font-size: .875rem;
+    margin-top: 1rem;
+  }
+  .milestone-box strong { display: block; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--track-color); margin-bottom: .2rem; }
+
+  /* hint panel */
+  .hint-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .78rem;
+    color: var(--track-color);
+    background: none;
+    border: 1px solid var(--track-color);
+    border-radius: 6px;
+    padding: .3rem .7rem;
+    cursor: pointer;
+    margin-top: .9rem;
+    transition: background .15s;
+  }
+  .hint-btn:hover { background: color-mix(in srgb, var(--track-color) 12%, var(--bg)); }
+
+  .hint-panel {
+    display: none;
+    margin-top: .75rem;
+    background: var(--hint-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .85rem 1rem;
+    font-size: .875rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .hint-panel.visible { display: block; }
+  .hint-loading { color: var(--muted); font-style: italic; }
+
+  /* ── actions ── */
+  .actions {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+  }
+
+  /* responsive */
+  @media (max-width: 520px) {
+    .stat-strip { grid-template-columns: 1fr 1fr; }
+    .roadmap-header { flex-direction: column; gap: .75rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-wide">
+
+  <!-- header -->
+  <div class="roadmap-header">
+    <div class="icon-box">{{ track_data.icon }}</div>
+    <div>
+      <h1>Your {{ track_data.label }} Roadmap</h1>
+      <div class="meta">
+        <span class="level-badge">{{ roadmap.level }}</span>
+        <span class="text-muted" style="font-size:.85rem">Generated by IBM Granite AI</span>
+      </div>
+      <p class="summary">{{ roadmap.summary }}</p>
+    </div>
+  </div>
+
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="stat-box">
+      <div class="val">{{ roadmap.modules | length }}</div>
+      <div class="lbl">Modules</div>
+    </div>
+    <div class="stat-box">
+      <div class="val">
+        {% set weeks = namespace(total=0) %}
+        {% for m in roadmap.modules %}
+          {% set weeks.total = weeks.total + (m.duration | extract_weeks) %}
+        {% endfor %}
+        {{ weeks.total }}w
+      </div>
+      <div class="lbl">Total Duration</div>
+    </div>
+    <div class="stat-box">
+      <div class="val">
+        {% set topic_count = namespace(total=0) %}
+        {% for m in roadmap.modules %}
+          {% set topic_count.total = topic_count.total + (m.topics | length) %}
+        {% endfor %}
+        {{ topic_count.total }}
+      </div>
+      <div class="lbl">Topics Covered</div>
+    </div>
+  </div>
+
+  <!-- timeline -->
+  <div class="timeline">
+    {% for module in roadmap.modules %}
+    <div class="module">
+      <div class="module-dot">{{ module.order }}</div>
+      <div class="module-card" id="module-{{ loop.index }}">
+
+        <div class="module-head" onclick="toggleModule('module-{{ loop.index }}')">
+          <div class="module-head-left">
+            <div>
+              <div class="module-title">{{ module.title }}</div>
+              <div class="module-dur">{{ module.duration }}</div>
+            </div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+
+        <div class="module-body">
+
+          <div class="section-label">Topics</div>
+          <div class="tags">
+            {% for topic in module.topics %}
+            <span class="tag">{{ topic }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="section-label">Resources</div>
+          <div class="tags">
+            {% for res in module.resources %}
+            <span class="tag" style="background: color-mix(in srgb, var(--track-color) 10%, var(--bg));">{{ res }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="milestone-box">
+            <strong>🎯 Milestone</strong>
+            {{ module.milestone }}
+          </div>
+
+          <button
+            class="hint-btn"
+            onclick="loadHint('{{ loop.index }}', '{{ module.title }}', '{{ track_data.label }}')"
+          >
+            ✨ Get AI Tip for this module
+          </button>
+          <div class="hint-panel" id="hint-{{ loop.index }}"></div>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- actions -->
+  <div class="actions">
+    <a href="{{ url_for('questionnaire', track=track) }}" class="btn btn-secondary">↩ Retake Assessment</a>
+    <a href="{{ url_for('index') }}"  class="btn btn-secondary">🗺 Try Another Track</a>
+    <button onclick="window.print()" class="btn btn-primary">🖨 Print Roadmap</button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Open first module by default
+  document.addEventListener("DOMContentLoaded", function () {
+    const first = document.getElementById("module-1");
+    if (first) first.classList.add("open");
+  });
+
+  function toggleModule(id) {
+    const card = document.getElementById(id);
+    card.classList.toggle("open");
+  }
+
+  function loadHint(index, moduleTitle, trackLabel) {
+    const panel = document.getElementById("hint-" + index);
+    const btn   = panel.previousElementSibling;
+
+    if (panel.classList.contains("visible")) {
+      panel.classList.remove("visible");
+      btn.textContent = "✨ Get AI Tip for this module";
+      return;
+    }
+
+    panel.classList.add("visible");
+    panel.innerHTML = '<span class="hint-loading">Asking Granite AI…</span>';
+    btn.textContent = "Hide Tip";
+    btn.disabled    = true;
+
+    fetch("/api/hint", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: moduleTitle, track: trackLabel })
+    })
+    .then(r => r.json())
+    .then(data => {
+      panel.innerHTML = data.hint || "No tip available right now.";
+      btn.disabled = false;
+    })
+    .catch(() => {
+      panel.innerHTML = "Could not load tip. Check your connection.";
+      btn.disabled = false;
+    });
+  }
+</script>
+{% endblock %}
