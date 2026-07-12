@@ -1,0 +1,11 @@
+# Force LF line endings and UTF-8 for all text files — prevents encoding corruption on Windows
+* text=auto eol=lf
+
+# Explicitly mark key files as UTF-8 text
+*.txt     text eol=lf
+*.py      text eol=lf
+*.html    text eol=lf
+*.yaml    text eol=lf
+*.yml     text eol=lf
+*.md      text eol=lf
+Procfile  text eol=lf
