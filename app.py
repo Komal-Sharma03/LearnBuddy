@@ -1,6 +1,8 @@
 import os
 import re
 import json
+from dotenv import load_dotenv
+load_dotenv()  # loads .env in local dev; no-op on Render (env vars set natively)
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from watsonx_client import generate_roadmap, generate_question
 
@@ -152,4 +154,5 @@ def restart():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.getenv("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
